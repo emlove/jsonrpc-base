@@ -1,11 +1,7 @@
-import asyncio
 import random
 import sys
 import json
-import functools
 import collections
-
-import aiohttp
 
 
 class JSONRPCError(Exception):
@@ -21,34 +17,17 @@ class ProtocolError(JSONRPCError):
 
 
 class Server(object):
-    """A connection to a HTTP JSON-RPC server, backed by aiohttp"""
+    """A connection to a JSON-RPC server"""
 
-    def __init__(self, url, session=None, **post_kwargs):
-        self.session = session or aiohttp.ClientSession()
-        post_kwargs['headers'] = post_kwargs.get('headers', {})
-        post_kwargs['headers']['Content-Type'] = post_kwargs['headers'].get('Content-Type', 'application/json')
-        post_kwargs['headers']['Accept'] = post_kwargs['headers'].get('Accept', 'application/json-rpc')
-        self.request = functools.partial(self.session.post, url, **post_kwargs)
+    def __init__(self, url):
+        raise NotImplementedError()
 
-    @asyncio.coroutine
     def send_request(self, method_name, is_notification, params):
-        """Issue the HTTP request to the server and return the method result (if not a notification)"""
-        request_body = self.serialize(method_name, params, is_notification)
-        try:
-            response = yield from self.request(data=request_body)
-        except (aiohttp.ClientResponseError, aiohttp.ClientOSError) as exc:
-            raise TransportError('Error calling method {}'.format(method_name), exc)
+        """Issue the request to the server and return the method result (if not a notification)
 
-        if response.status != 200:
-            raise TransportError('HTTP {:d} {}'.format(response.status, response.reason))
-
-        if not is_notification:
-            try:
-                parsed = yield from response.json()
-            except ValueError as value_error:
-                raise TransportError('Cannot deserialize response body', value_error)
-
-            return self.parse_result(parsed)
+        This method must be implemented by the child class.
+        """
+        raise NotImplementedError()
 
     @staticmethod
     def parse_result(result):
