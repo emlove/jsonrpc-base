@@ -18,7 +18,7 @@ Main Features
 Usage
 -----
 
-See `jsonrpc-async <https://github.com/armills/jsonrpc-async>`_ for an example implementation.
+See `jsonrpc-async <https://github.com/armills/jsonrpc-async>`_ and `jsonrpc-websocket <https://github.com/armills/jsonrpc-websocket>`_ for example implementations.
 
 Tests
 -----
