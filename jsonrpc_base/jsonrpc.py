@@ -67,7 +67,7 @@ class Server(object):
                 'message': 'Method not found',
             }
 
-        if request.msg_id:
+        if request.msg_id != None:
             return Response(request, result, error)
         else:
             return None
