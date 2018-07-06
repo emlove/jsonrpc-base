@@ -67,7 +67,7 @@ class Server(object):
                 'message': 'Method not found',
             }
 
-        if request.msg_id:
+        if request.msg_id is not None:
             return Response(request, result, error)
         else:
             return None
@@ -161,9 +161,9 @@ class Request(Message):
     def serialize(self):
         """Generate the raw JSON message to be sent to the server"""
         data = {'jsonrpc': '2.0', 'method': self.method}
-        if self.params:
+        if self.params is not None:
             data['params'] = self.params
-        if self.msg_id:
+        if self.msg_id is not None:
             data['id'] = self.msg_id
         return json.dumps(data)
 
