@@ -283,6 +283,60 @@ class TestJSONRPCClient(TestCase):
         self.assertEqual(response.error['code'], -32000)
         self.assertEqual(response.error['message'], 'Server Error: Bad Server Handler')
 
+    def test_receive_server_requests_with_id_zero(self):
+        def event_handler(*args, **kwargs):
+            return args, kwargs
+        self.server.on_server_event = event_handler
+        self.server.namespace.on_server_event = event_handler
+
+        response = self.server.receive_request(jsonrpc_base.Request(
+            'on_server_event', msg_id=0))
+        args, kwargs = response.result
+        self.assertEqual(len(args), 0)
+        self.assertEqual(len(kwargs), 0)
+
+        response = self.server.receive_request(jsonrpc_base.Request(
+            'namespace.on_server_event', msg_id=0))
+        args, kwargs = response.result
+        self.assertEqual(len(args), 0)
+        self.assertEqual(len(kwargs), 0)
+
+        response = self.server.receive_request(jsonrpc_base.Request(
+            'on_server_event', params=['foo', 'bar'], msg_id=0))
+        args, kwargs = response.result
+        self.assertEqual(args, ('foo', 'bar'))
+        self.assertEqual(len(kwargs), 0)
+
+        response = self.server.receive_request(jsonrpc_base.Request(
+            'on_server_event', params={'foo': 'bar'}, msg_id=0))
+        args, kwargs = response.result
+        self.assertEqual(len(args), 0)
+        self.assertEqual(kwargs, {'foo': 'bar'})
+
+        with self.assertRaises(ProtocolError):
+            response = self.server.receive_request(jsonrpc_base.Request(
+                'on_server_event', params="string_params", msg_id=0))
+
+        response = self.server.receive_request(jsonrpc_base.Request(
+            'missing_event', params={'foo': 'bar'}, msg_id=0))
+        self.assertEqual(response.error['code'], -32601)
+        self.assertEqual(response.error['message'], 'Method not found')
+
+        response = self.server.receive_request(jsonrpc_base.Request(
+            'on_server_event'))
+        self.assertEqual(response, None)
+
+        def bad_handler():
+            raise Exception("Bad Server Handler")
+        self.server.on_bad_handler = bad_handler
+
+        # receive_request will normally print traceback when an exception is caught.
+        # This isn't necessary for the test
+        with block_stderr():
+            response = self.server.receive_request(jsonrpc_base.Request(
+                'on_bad_handler', msg_id=0))
+        self.assertEqual(response.error['code'], -32000)
+        self.assertEqual(response.error['message'], 'Server Error: Bad Server Handler')
 
     def test_server_responses(self):
         def handler(message):
