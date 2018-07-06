@@ -9,7 +9,7 @@ except ImportError:
 
 setup(
     name='jsonrpc-base',
-    version='1.0',
+    version='1.0.1',
     author='Adam Mills',
     author_email='adam@armills.info',
     packages=('jsonrpc_base',),
@@ -20,7 +20,7 @@ setup(
     long_description=open('README.rst').read(),
     install_requires=[],
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
         'Topic :: Software Development :: Libraries',
         'License :: OSI Approved :: BSD License',

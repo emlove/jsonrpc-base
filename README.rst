@@ -11,7 +11,7 @@ This is a compact and simple JSON-RPC client implementation interface python cod
 Main Features
 -------------
 
-* Python 2.7, 3.4 & 3.5 compatible
+* Python 2.7, 3.4, 3.5 & 3.6 compatible
 * Supports nested namespaces (eg. `app.users.getUsers()`)
 * 100% test coverage
 
@@ -23,6 +23,12 @@ See `jsonrpc-async <https://github.com/armills/jsonrpc-async>`_ and `jsonrpc-web
 Tests
 -----
 Install the Python tox package and run ``tox``, it'll test this package with various versions of Python.
+
+Changelog
+---------
+1.0.1 (July 6, 2018)
+~~~~~~~~~~~~~~
+- Falsey values are no longer treated as None for message IDs, or request parameters.
 
 Credits
 -------
