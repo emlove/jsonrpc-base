@@ -372,6 +372,19 @@ class TestJSONRPCClient(TestCase):
         request = jsonrpc_base.Request('test_method', msg_id=1)
         self.assertEqual(request.response_id, 1)
 
+    def test_jsonrpc_1_0_call(self):
+        # JSON-RPC 1.0 spec needs "error" to be present (with `null` value) when no error occured
+        def handler(message):
+            self.assertEqual(message.params, [42, 23])
+            return {
+                "result": 19,
+                "id": 1,
+                "error": None,
+            }
+
+        self.server._handler = handler
+        self.assertEqual(self.server.subtract(42, 23), 19)
+
 
 if __name__ == '__main__':
     unittest.main()
