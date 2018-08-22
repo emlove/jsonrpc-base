@@ -175,7 +175,7 @@ class Request(Message):
 
         if not isinstance(data, dict):
             raise ProtocolError('Response is not a dictionary')
-        if 'error' in data:
+        if data.get('error') is not None:
             code = data['error'].get('code', '')
             message = data['error'].get('message', '')
             raise ProtocolError(code, message, data)
