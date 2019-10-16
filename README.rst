@@ -11,7 +11,7 @@ This is a compact and simple JSON-RPC client implementation interface python cod
 Main Features
 -------------
 
-* Python 2.7, 3.4, 3.5 & 3.6 compatible
+* Python 3.5, 3.6, 3.7 & 3.8 compatible
 * Supports nested namespaces (eg. `app.users.getUsers()`)
 * 100% test coverage
 
