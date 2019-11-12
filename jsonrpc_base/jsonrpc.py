@@ -100,7 +100,7 @@ class Server(object):
         # from the specs:
         # "If resent, parameters for the rpc call MUST be provided as a Structured value.
         #  Either by-position through an Array or by-name through an Object."
-        if len(args) == 1 and isinstance(args[0], collections.Mapping):
+        if len(args) == 1 and isinstance(args[0], collections.abc.Mapping):
             args = dict(args[0])
 
         return self.send_message(Request(method_name, args or kwargs, msg_id))
