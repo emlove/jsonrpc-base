@@ -27,7 +27,7 @@ Install the Python tox package and run ``tox``, it'll test this package with var
 Changelog
 ---------
 1.0.3 (November 12, 2019)
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
 - Forwards compatibility for Python 3.9. `(#4) <https://github.com/armills/jsonrpc-base/pull/4>`_ `@ a1fred <https://github.com/a1fred>`_
 
 1.0.2 (August 23, 2018)
