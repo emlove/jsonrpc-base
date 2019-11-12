@@ -26,12 +26,16 @@ Install the Python tox package and run ``tox``, it'll test this package with var
 
 Changelog
 ---------
+1.0.3 (November 12, 2019)
+~~~~~~~~~~~~~~~~~~~~~~~
+- Forwards compatibility for Python 3.9. `(#4) <https://github.com/armills/jsonrpc-base/pull/4>`_ `@ a1fred <https://github.com/a1fred>`_
+
 1.0.2 (August 23, 2018)
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 - Improved support for JSON-RPC v1 servers. `(#2) <https://github.com/armills/jsonrpc-base/pull/2>`_ `@tdivis <https://github.com/tdivis>`_
 
 1.0.1 (July 6, 2018)
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 - Falsey values are no longer treated as None for message IDs, or request parameters.
 
 Credits
