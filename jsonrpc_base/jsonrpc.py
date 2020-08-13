@@ -1,8 +1,11 @@
 import collections
+import inspect
 import json
+import logging
 import random
 import sys
-import traceback
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class JSONRPCError(Exception):
@@ -43,20 +46,52 @@ class Server(object):
         """Called by the implementation when a request is received from the server."""
         result = None
         error = None
-        args = []
-        kwargs = {}
-        if isinstance(request.params, list):
-            args = request.params
-        elif isinstance(request.params, dict):
-            kwargs = request.params
-        elif request.params is not None:
-            raise ProtocolError('Parameters must either be a positional list or named dict.')
+        args, kwargs = request.get_args()
 
         if request.method in self._server_request_handlers:
             try:
-                result = self._server_request_handlers[request.method](*args, **kwargs)
+                handler = self._server_request_handlers[request.method]
+                if inspect.iscoroutinefunction(handler):
+                    raise TypeError(
+                        "Async handlers are not supported in synchronous sever implementations")
+                else:
+                    result = handler(*args, **kwargs)
             except Exception as exc:
-                traceback.print_exception(*sys.exc_info())
+                _LOGGER.error(exc, exc_info=exc)
+                error = {
+                    'code': -32000,
+                    'message': 'Server Error: %s' % exc,
+                }
+        else:
+            error = {
+                'code': -32601,
+                'message': 'Method not found',
+            }
+
+        if request.msg_id is not None:
+            return Response(request, result, error)
+        else:
+            return None
+
+    async def async_receive_request(self, request):
+        """Called by an asyncio implementation when a request is received from the server.
+
+        If the implementation calls async_receive_request instead of
+        receive_request, asynchronous request handlers are also supported
+        """
+        result = None
+        error = None
+        args, kwargs = request.get_args()
+
+        if request.method in self._server_request_handlers:
+            try:
+                handler = self._server_request_handlers[request.method]
+                if inspect.iscoroutinefunction(handler):
+                    result = await handler(*args, **kwargs)
+                else:
+                    result = handler(*args, **kwargs)
+            except Exception as exc:
+                _LOGGER.error(exc, exc_info=exc)
                 error = {
                     'code': -32000,
                     'message': 'Server Error: %s' % exc,
@@ -188,6 +223,18 @@ class Request(Message):
     def transport_error_text(self):
         """Exception text for a transport error."""
         return 'Error calling method %r' % self.method
+
+    def get_args(self):
+        """Transform the request parameters into args/kwargs"""
+        args = []
+        kwargs = {}
+        if isinstance(self.params, list):
+            args = self.params
+        elif isinstance(self.params, dict):
+            kwargs = self.params
+        elif self.params is not None:
+            raise ProtocolError('Parameters must either be a positional list or named dict.')
+        return args, kwargs
 
 
 class Response(Message):
