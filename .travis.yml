@@ -7,7 +7,7 @@ python:
 install:
   - pip install -qr requirements-test.txt
 script:
-  - coverage run tests.py
+  - pytest --cov-report term-missing --cov=jsonrpc_base tests.py
 notifications:
   email: false
 after_success:
