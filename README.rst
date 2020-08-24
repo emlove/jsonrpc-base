@@ -26,8 +26,8 @@ Install the Python tox package and run ``tox``, it'll test this package with var
 
 Changelog
 ---------
-Next
-~~~~
+1.1.0 (August 24, 2020)
+~~~~~~~~~~~~~~~~~~~~~~~
 - Support for async server request handlers
 
 1.0.3 (November 12, 2019)
