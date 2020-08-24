@@ -53,11 +53,14 @@ def assertSameJSON(json1, json2):
     """Tells whether two json strings, once decoded, are the same dictionary"""
     assert json.loads(json1) == json.loads(json2)
 
+@pytest.fixture(autouse=True)
+def mock_rand():
+    """Mock the build in rand method for determinism in tests."""
+    random.randint = Mock(return_value=1)
 
 @pytest.fixture
 def server():
     """Get the mock server object"""
-    random.randint = Mock(return_value=1)
     return MockServer('http://mock/xmlrpc')
 
 
