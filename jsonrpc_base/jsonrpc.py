@@ -16,10 +16,11 @@ class TransportError(JSONRPCError):
     """An error occurred while performing a connection to the server"""
 
     def __init__(self, exception_text, message=None, *args):
-        """Create the transport error with information about the attempted message."""
+        """Create the transport error for the attempted message."""
         if message:
             super(TransportError, self).__init__(
-                '%s: %s' % (message.transport_error_text, exception_text), *args)
+                '%s: %s' % (message.transport_error_text, exception_text),
+                *args)
         else:
             super(TransportError, self).__init__(exception_text, *args)
 
@@ -36,14 +37,14 @@ class Server(object):
         self._server_request_handlers = {}
 
     def send_message(self, message):
-        """Issue the request to the server and return the method result (if not a notification)
+        """Issue the request to the server and return the method result.
 
         This method must be implemented by the child class.
         """
         raise NotImplementedError()
 
     def receive_request(self, request):
-        """Called by the implementation when a request is received from the server."""
+        """Called when a request is received from the server."""
         result = None
         error = None
         args, kwargs = request.get_args()
@@ -53,7 +54,8 @@ class Server(object):
                 handler = self._server_request_handlers[request.method]
                 if inspect.iscoroutinefunction(handler):
                     raise TypeError(
-                        "Async handlers are not supported in synchronous sever implementations")
+                        "Async handlers are not supported in "
+                        "synchronous sever implementations")
                 else:
                     result = handler(*args, **kwargs)
             except Exception as exc:
@@ -74,7 +76,7 @@ class Server(object):
             return None
 
     async def async_receive_request(self, request):
-        """Called by an asyncio implementation when a request is received from the server.
+        """Called when a request is received from the server.
 
         If the implementation calls async_receive_request instead of
         receive_request, asynchronous request handlers are also supported
@@ -108,19 +110,19 @@ class Server(object):
             return None
 
     def __getattr__(self, method_name):
-        if method_name.startswith("_"):  # prevent rpc-calls for private methods
+        if method_name.startswith("_"):  # prevent calls for private methods
             raise AttributeError("invalid attribute '%s'" % method_name)
         return Method(self.__request, self.__register, method_name)
 
     def __setattr__(self, method_name, callback):
-        if method_name.startswith("_"):  # prevent rpc-calls for private methods
+        if method_name.startswith("_"):  # prevent calls for private methods
             return super(Server, self).__setattr__(method_name, callback)
         return self.__register(method_name, callback)
 
     def __request(self, method_name, args=None, kwargs=None):
         """Perform the actual RPC call.
 
-        If _notification=True, send a notification and don't wait for a response
+        If _notification=True, don't wait for a response
         """
         if kwargs.pop('_notification', False):
             msg_id = None
@@ -130,18 +132,20 @@ class Server(object):
             msg_id = random.randint(1, sys.maxsize)
 
         if args and kwargs:
-            raise ProtocolError('JSON-RPC spec forbids mixing arguments and keyword arguments')
+            raise ProtocolError(
+                'JSON-RPC spec forbids mixing arguments and keyword arguments')
 
         # from the specs:
-        # "If resent, parameters for the rpc call MUST be provided as a Structured value.
-        #  Either by-position through an Array or by-name through an Object."
+        # "If resent, parameters for the rpc call MUST be provided as a
+        # Structured value.  Either by-position through an Array or by-name
+        # through an Object."
         if len(args) == 1 and isinstance(args[0], collections.abc.Mapping):
             args = dict(args[0])
 
         return self.send_message(Request(method_name, args or kwargs, msg_id))
 
     def __register(self, method_name, callback):
-        """Register a callback to be called if the server sends this request to the client."""
+        """Register a callback for if the server sends this request."""
         self._server_request_handlers[method_name] = callback
 
 
@@ -185,8 +189,12 @@ class Request(Message):
         method = data.get('method')
         params = data.get('params')
         msg_id = data.get('id')
-        if not isinstance(params, list) and not isinstance(params, dict) and params is not None:
-            raise ProtocolError('Parameters must either be a positional list or named dict.')
+        if (
+                not isinstance(params, list)
+                and not isinstance(params, dict)
+                and params is not None):
+            raise ProtocolError(
+                'Parameters must either be a positional list or named dict.')
         return Request(method, params, msg_id)
 
     @property
@@ -233,7 +241,8 @@ class Request(Message):
         elif isinstance(self.params, dict):
             kwargs = self.params
         elif self.params is not None:
-            raise ProtocolError('Parameters must either be a positional list or named dict.')
+            raise ProtocolError(
+                'Parameters must either be a positional list or named dict.')
         return args, kwargs
 
 
@@ -274,7 +283,7 @@ class Method(object):
         self.__method_name = method_name
 
     def __getattr__(self, method_name):
-        if method_name.startswith("_"):  # prevent rpc-calls for private methods
+        if method_name.startswith("_"):  # prevent calls for private methods
             raise AttributeError("invalid attribute '%s'" % method_name)
         return Method(self.__request_method, self.__register_method,
                       "%s.%s" % (self.__method_name, method_name))
@@ -283,6 +292,7 @@ class Method(object):
         return self.__request_method(self.__method_name, args, kwargs)
 
     def __setattr__(self, method_name, callback):
-        if method_name.startswith("_"):  # prevent rpc-calls for private methods
+        if method_name.startswith("_"):  # prevent calls for private methods
             return super(Method, self).__setattr__(method_name, callback)
-        return self.__register_method("%s.%s" % (self.__method_name, method_name), callback)
+        return self.__register_method(
+            "%s.%s" % (self.__method_name, method_name), callback)

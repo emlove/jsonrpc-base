@@ -1,10 +1,8 @@
 import contextlib
 import json
-import os
 import random
 import sys
 
-import pep8
 import pytest
 from unittest.mock import Mock
 
@@ -68,21 +66,6 @@ def mock_rand():
 def server():
     """Get the mock server object"""
     return MockServer('http://mock/xmlrpc')
-
-
-def test_pep8_conformance(server):
-    """Test that we conform to PEP8."""
-
-    source_files = ['tests.py']
-    project_dir = os.path.dirname(os.path.abspath(__file__))
-    package_dir = os.path.join(project_dir, 'jsonrpc_base')
-    for root, directories, filenames in os.walk(package_dir):
-        source_files.extend([
-            os.path.join(root, f) for f in filenames if f.endswith('.py')])
-
-    pep8style = pep8.StyleGuide(quiet=False, max_line_length=120)
-    result = pep8style.check_files(source_files)
-    assert result.total_errors == 0
 
 
 def test_dumps(server):
