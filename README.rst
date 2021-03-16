@@ -26,20 +26,25 @@ Install the Python tox package and run ``tox``, it'll test this package with var
 
 Changelog
 ---------
-1.1.0 (August 24, 2020)
-~~~~~~~~~~~~~~~~~~~~~~~
+2.0.0 (2021-03-16)
+~~~~~~~~~~~~~~~~~~
+- BREAKING CHANGE: `Allow single mapping as a positional parameter. <https://github.com/emlove/jsonrpc-base/pull/6>`_
+  Previously, when calling with a single dict as a parameter (example: ``server.foo({'bar': 0})``), the mapping was used as the JSON-RPC keyword parameters. This made it impossible to send a mapping as the first and only positional parameter. If you depended on the old behavior, you can recreate it by spreading the mapping as your method's kwargs. (example: ``server.foo(**{'bar': 0})``)
+
+1.1.0 (2020-08-24)
+~~~~~~~~~~~~~~~~~~
 - Support for async server request handlers
 
-1.0.3 (November 12, 2019)
-~~~~~~~~~~~~~~~~~~~~~~~~~
+1.0.3 (2019-11-12)
+~~~~~~~~~~~~~~~~~~
 - Forwards compatibility for Python 3.9. `(#4) <https://github.com/emlove/jsonrpc-base/pull/4>`_ `@ a1fred <https://github.com/a1fred>`_
 
-1.0.2 (August 23, 2018)
-~~~~~~~~~~~~~~~~~~~~~~~
+1.0.2 (2018-08-23)
+~~~~~~~~~~~~~~~~~~
 - Improved support for JSON-RPC v1 servers. `(#2) <https://github.com/emlove/jsonrpc-base/pull/2>`_ `@tdivis <https://github.com/tdivis>`_
 
-1.0.1 (July 6, 2018)
-~~~~~~~~~~~~~~~~~~~~
+1.0.1 (2018-07-06)
+~~~~~~~~~~~~~~~~~~
 - Falsey values are no longer treated as None for message IDs, or request parameters.
 
 Credits
