@@ -229,7 +229,7 @@ def test_calls(server):
 
     # rpc call with a mapping type
     def handler3(message):
-        assert message.params == {'foo': 'bar'}
+        assert message.params == [{'foo': 'bar'}]
         return {
             "jsonrpc": "2.0",
             "result": None,
@@ -238,6 +238,18 @@ def test_calls(server):
 
     server._handler = handler3
     server.foobar({'foo': 'bar'})
+
+    # rpc call with direct dict params
+    def handler3(message):
+        assert message.params == {'foo': 'bar'}
+        return {
+            "jsonrpc": "2.0",
+            "result": None,
+            "id": 1,
+        }
+
+    server._handler = handler3
+    server.foobar(**{'foo': 'bar'})
 
 
 def test_notification(server):
