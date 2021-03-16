@@ -1,5 +1,4 @@
 import contextlib
-import inspect
 import json
 import os
 import random
@@ -18,6 +17,7 @@ pytestmark = pytest.mark.asyncio
 class DummyFile(object):
     def write(self, x): pass
 
+
 @contextlib.contextmanager
 def block_stderr():
     real_stderr = sys.stderr
@@ -25,8 +25,10 @@ def block_stderr():
     yield
     sys.stderr = real_stderr
 
+
 class MockTransportError(ValueError):
     """Test exception representing a transport library error."""
+
 
 class MockServer(Server):
 
@@ -36,15 +38,17 @@ class MockServer(Server):
         self._handler = None
 
     def send_message(self, message):
-        """Issue the request to the server and return the method result (if not a notification)"""
+        """Issue the request to the server and return the method result"""
         try:
             if isinstance(message, jsonrpc_base.Request):
-                data = jsonrpc_base.Request.parse(json.loads(message.serialize()))
+                data = jsonrpc_base.Request.parse(
+                    json.loads(message.serialize()))
             else:
                 data = message.serialize()
             response = json.loads(json.dumps(self._handler(data)))
         except Exception as requests_exception:
-            raise TransportError('Transport Error', message, requests_exception)
+            raise TransportError(
+                'Transport Error', message, requests_exception)
 
         return message.parse_response(response)
 
@@ -53,10 +57,12 @@ def assertSameJSON(json1, json2):
     """Tells whether two json strings, once decoded, are the same dictionary"""
     assert json.loads(json1) == json.loads(json2)
 
+
 @pytest.fixture(autouse=True)
 def mock_rand():
     """Mock the build in rand method for determinism in tests."""
     random.randint = Mock(return_value=1)
+
 
 @pytest.fixture
 def server():
@@ -67,47 +73,60 @@ def server():
 def test_pep8_conformance(server):
     """Test that we conform to PEP8."""
 
-    source_files = []
+    source_files = ['tests.py']
     project_dir = os.path.dirname(os.path.abspath(__file__))
     package_dir = os.path.join(project_dir, 'jsonrpc_base')
     for root, directories, filenames in os.walk(package_dir):
-        source_files.extend([os.path.join(root, f) for f in filenames if f.endswith('.py')])
+        source_files.extend([
+            os.path.join(root, f) for f in filenames if f.endswith('.py')])
 
     pep8style = pep8.StyleGuide(quiet=False, max_line_length=120)
     result = pep8style.check_files(source_files)
     assert result.total_errors == 0
 
+
 def test_dumps(server):
     # test no args
     assertSameJSON(
         '''{"jsonrpc": "2.0", "method": "my_method_name", "id": 1}''',
-        jsonrpc_base.Request('my_method_name', params=None, msg_id=1).serialize()
+        jsonrpc_base.Request(
+            'my_method_name', params=None, msg_id=1).serialize()
     )
     # test zero message ID
     assertSameJSON(
         '''{"jsonrpc": "2.0", "method": "my_method_name", "id": 0}''',
-        jsonrpc_base.Request('my_method_name', params=None, msg_id=0).serialize()
+        jsonrpc_base.Request(
+            'my_method_name', params=None, msg_id=0).serialize()
     )
     # test empty args dict
     assertSameJSON(
-        '''{"params": {}, "jsonrpc": "2.0", "method": "my_method_name", "id": 1}''',
-        jsonrpc_base.Request('my_method_name', params={}, msg_id=1).serialize()
+        '''{"params": {}, "jsonrpc": "2.0", "method": "my_method_name", "id":
+        1}''',
+        jsonrpc_base.Request(
+            'my_method_name', params={}, msg_id=1).serialize()
     )
     # test keyword args
     assertSameJSON(
-        '''{"params": {"foo": "bar"}, "jsonrpc": "2.0", "method": "my_method_name", "id": 1}''',
-        jsonrpc_base.Request('my_method_name', params={'foo': 'bar'}, msg_id=1).serialize()
+        '''{"params": {"foo": "bar"}, "jsonrpc": "2.0", "method":
+        "my_method_name", "id": 1}''',
+        jsonrpc_base.Request(
+            'my_method_name', params={'foo': 'bar'}, msg_id=1).serialize()
     )
     # test positional args
     assertSameJSON(
-        '''{"params": ["foo", "bar"], "jsonrpc": "2.0", "method": "my_method_name", "id": 1}''',
-        jsonrpc_base.Request('my_method_name', params=('foo', 'bar'), msg_id=1).serialize()
+        '''{"params": ["foo", "bar"], "jsonrpc": "2.0", "method":
+        "my_method_name", "id": 1}''',
+        jsonrpc_base.Request(
+            'my_method_name', params=('foo', 'bar'), msg_id=1).serialize()
     )
     # test notification
     assertSameJSON(
-        '''{"params": ["foo", "bar"], "jsonrpc": "2.0", "method": "my_method_name"}''',
-        jsonrpc_base.Request('my_method_name', params=('foo', 'bar'), msg_id=None).serialize()
+        '''{"params": ["foo", "bar"], "jsonrpc": "2.0", "method":
+        "my_method_name"}''',
+        jsonrpc_base.Request(
+            'my_method_name', params=('foo', 'bar'), msg_id=None).serialize()
     )
+
 
 def test_parse_result(server):
     request = jsonrpc_base.Request('my_message', msg_id=1)
@@ -116,10 +135,15 @@ def test_parse_result(server):
     with pytest.raises(ProtocolError, match='Response without a result field'):
         request.parse_response({})
     with pytest.raises(ProtocolError) as protoerror:
-        body = {"jsonrpc": "2.0", "error": {"code": -32601, "message": "Method not found"}, "id": "1"}
+        body = {
+            "jsonrpc": "2.0", "error": {
+                "code": -32601, "message": "Method not found"
+            }, "id": "1"
+        }
         request.parse_response(body)
     assert protoerror.value.args[0] == -32601
     assert protoerror.value.args[1] == 'Method not found'
+
 
 def test_send_message(server):
     empty_server = Server()
@@ -134,7 +158,8 @@ def test_send_message(server):
         server._handler = handler
         server.send_message(jsonrpc_base.Request('my_method', msg_id=1))
 
-    assert transport_error.value.args[0] == "Error calling method 'my_method': Transport Error"
+    assert transport_error.value.args[0] == (
+        "Error calling method 'my_method': Transport Error")
     assert isinstance(transport_error.value.args[1], MockTransportError)
 
     # a notification
@@ -143,21 +168,25 @@ def test_send_message(server):
     server._handler = handler
     server.send_message(jsonrpc_base.Request('my_notification', msg_id=None))
 
+
 def test_exception_passthrough(server):
     with pytest.raises(TransportError) as transport_error:
         def handler(message):
             raise MockTransportError("Transport Error")
         server._handler = handler
         server.foo()
-    assert transport_error.value.args[0] == "Error calling method 'foo': Transport Error"
+    assert transport_error.value.args[0] == (
+        "Error calling method 'foo': Transport Error")
     assert isinstance(transport_error.value.args[1], MockTransportError)
+
 
 def test_transport_error_constructor(server):
     with pytest.raises(TransportError, match='Test Message'):
         raise TransportError('Test Message')
 
+
 def test_forbid_private_methods(server):
-    """Test that we can't call private class methods (those starting with '_')"""
+    """Test that we can't call private class methods"""
     with pytest.raises(AttributeError):
         server._foo()
 
@@ -165,10 +194,15 @@ def test_forbid_private_methods(server):
     with pytest.raises(AttributeError):
         server.foo.bar._baz()
 
+
 def test_method_call(server):
     """mixing *args and **kwargs is forbidden by the spec"""
-    with pytest.raises(ProtocolError, match='JSON-RPC spec forbids mixing arguments and keyword arguments'):
+    with pytest.raises(
+            ProtocolError,
+            match='JSON-RPC spec forbids mixing arguments and keyword '
+            'arguments'):
         server.testmethod(1, 2, a=1, b=2)
+
 
 def test_method_nesting(server):
     """Test that we correctly nest namespaces"""
@@ -181,7 +215,9 @@ def test_method_nesting(server):
     server._handler = handler
 
     assert server.nest.testmethod("nest.testmethod")
-    assert server.nest.testmethod.some.other.method("nest.testmethod.some.other.method")
+    assert server.nest.testmethod.some.other.method(
+        "nest.testmethod.some.other.method")
+
 
 def test_calls(server):
     # rpc call with positional parameters:
@@ -220,6 +256,7 @@ def test_calls(server):
     server._handler = handler3
     server.foobar({'foo': 'bar'})
 
+
 def test_notification(server):
     # Verify that we ignore the server response
     def handler(message):
@@ -230,6 +267,7 @@ def test_notification(server):
         }
     server._handler = handler
     assert server.subtract(42, 23, _notification=True) is None
+
 
 def test_receive_server_requests(server):
     def event_handler(*args, **kwargs):
@@ -279,13 +317,13 @@ def test_receive_server_requests(server):
 
     response = server.receive_request(jsonrpc_base.Request(
         'on_server_event'))
-    assert response == None
+    assert response is None
 
     def bad_handler():
         raise Exception("Bad Server Handler")
     server.on_bad_handler = bad_handler
 
-    # receive_request will normally print traceback when an exception is caught.
+    # receive_request will normally print traceback when an exception is caught
     # This isn't necessary for the test
     with block_stderr():
         response = server.receive_request(jsonrpc_base.Request(
@@ -300,8 +338,10 @@ def test_receive_server_requests(server):
     response = server.receive_request(jsonrpc_base.Request(
         'on_async_server_event', msg_id=1))
     assert response.error['code'] == -32000
-    assert response.error['message'] == ('Server Error: Async handlers are not '
-        'supported in synchronous sever implementations')
+    assert response.error['message'] == (
+        'Server Error: Async handlers are not'
+        ' supported in synchronous sever implementations')
+
 
 async def test_async_receive_server_requests(server):
     def event_handler(*args, **kwargs):
@@ -332,7 +372,8 @@ async def test_async_receive_server_requests(server):
 
     response = await server.async_receive_request(jsonrpc_base.Request(
         'on_server_event'))
-    assert response == None
+    assert response is None
+
 
 async def test_server_responses(server):
     def handler(message):
@@ -363,7 +404,8 @@ async def test_server_responses(server):
         'missing_method', msg_id=1))
     server.send_message(response)
     assertSameJSON(
-        '''{"jsonrpc": "2.0", "error": {"code": -32601, "message": "Method not found"}, "id": 1}''',
+        '''{"jsonrpc": "2.0", "error": {"code": -32601, "message": "Method'''
+        ''' not found"}, "id": 1}''',
         handler.response
     )
 
@@ -376,7 +418,10 @@ async def test_server_responses(server):
     server.good_method = good_method
     response = server.receive_request(jsonrpc_base.Request(
         'good_method', msg_id=1))
-    with pytest.raises(TransportError, match="Error responding to server method 'good_method': Transport Error"):
+    with pytest.raises(
+            TransportError,
+            match="Error responding to server method 'good_method': "
+            "Transport Error"):
         server.send_message(response)
 
     async def async_bad_method():
@@ -384,13 +429,16 @@ async def test_server_responses(server):
     server.async_bad_method = async_bad_method
     response = await server.async_receive_request(jsonrpc_base.Request(
         'async_bad_method', msg_id=1))
-    with pytest.raises(TransportError, match="Error responding to server method 'async_bad_method': Transport Error"):
+    with pytest.raises(
+            TransportError,
+            match="Error responding to server method 'async_bad_method': "
+            "Transport Error"):
         server.send_message(response)
 
 
 def test_base_message(server):
     message = jsonrpc_base.Message()
-    assert message.response_id == None
+    assert message.response_id is None
 
     with pytest.raises(NotImplementedError):
         message.serialize()
@@ -399,23 +447,32 @@ def test_base_message(server):
         message.parse_response(None)
 
     with pytest.raises(NotImplementedError):
-        text = message.transport_error_text
+        message.transport_error_text
 
     with pytest.raises(NotImplementedError):
         str(message)
 
+
 def test_request(server):
-    with pytest.raises(ProtocolError, match='Request from server does not contain method'):
+    with pytest.raises(
+            ProtocolError,
+            match='Request from server does not contain method'):
         jsonrpc_base.Request.parse({})
 
-    with pytest.raises(ProtocolError, match='Parameters must either be a positional list or named dict.'):
-        jsonrpc_base.Request.parse({'method': 'test_method', 'params': 'string_params'})
+    with pytest.raises(
+            ProtocolError,
+            match='Parameters must either be a positional list or named dict.'
+            ):
+        jsonrpc_base.Request.parse(
+            {'method': 'test_method', 'params': 'string_params'})
 
     request = jsonrpc_base.Request('test_method', msg_id=1)
     assert request.response_id == 1
 
+
 def test_jsonrpc_1_0_call(server):
-    # JSON-RPC 1.0 spec needs "error" to be present (with `null` value) when no error occured
+    # JSON-RPC 1.0 spec needs "error" to be present (with `null` value) when no
+    # error occured
     def handler(message):
         assert message.params == [42, 23]
         return {
