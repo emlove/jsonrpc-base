@@ -1,8 +1,7 @@
 import inspect
 import json
 import logging
-import random
-import sys
+import uuid
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -126,9 +125,7 @@ class Server(object):
         if kwargs.pop('_notification', False):
             msg_id = None
         else:
-            # some JSON-RPC servers complain when receiving str(uuid.uuid4()).
-            # Let's pick something simpler.
-            msg_id = random.randint(1, sys.maxsize)
+            msg_id = str(uuid.uuid4())
 
         if args and kwargs:
             raise ProtocolError(

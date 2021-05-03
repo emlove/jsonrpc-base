@@ -1,27 +1,12 @@
-import contextlib
 import json
-import random
-import sys
 
 import pytest
-from unittest.mock import Mock
+from unittest import mock
 
 import jsonrpc_base
 from jsonrpc_base import Server, ProtocolError, TransportError
 
 pytestmark = pytest.mark.asyncio
-
-
-class DummyFile(object):
-    def write(self, x): pass
-
-
-@contextlib.contextmanager
-def block_stderr():
-    real_stderr = sys.stderr
-    sys.stderr = DummyFile()
-    yield
-    sys.stderr = real_stderr
 
 
 class MockTransportError(ValueError):
@@ -54,12 +39,6 @@ class MockServer(Server):
 def assertSameJSON(json1, json2):
     """Tells whether two json strings, once decoded, are the same dictionary"""
     assert json.loads(json1) == json.loads(json2)
-
-
-@pytest.fixture(autouse=True)
-def mock_rand():
-    """Mock the build in rand method for determinism in tests."""
-    random.randint = Mock(return_value=1)
 
 
 @pytest.fixture
@@ -205,6 +184,7 @@ def test_method_nesting(server):
 def test_calls(server):
     # rpc call with positional parameters:
     def handler1(message):
+        assert message.msg_id == "abcd-1234"
         assert message.params == [42, 23]
         return {
             "jsonrpc": "2.0",
@@ -213,7 +193,8 @@ def test_calls(server):
         }
 
     server._handler = handler1
-    assert server.subtract(42, 23) == 19
+    with mock.patch("uuid.uuid4", return_value="abcd-1234"):
+        assert server.subtract(42, 23) == 19
 
     # rpc call with named parameters
     def handler2(message):
@@ -320,9 +301,8 @@ def test_receive_server_requests(server):
 
     # receive_request will normally print traceback when an exception is caught
     # This isn't necessary for the test
-    with block_stderr():
-        response = server.receive_request(jsonrpc_base.Request(
-            'on_bad_handler', msg_id=1))
+    response = server.receive_request(jsonrpc_base.Request(
+        'on_bad_handler', msg_id=1))
     assert response.error['code'] == -32000
     assert response.error['message'] == 'Server Error: Bad Server Handler'
 
