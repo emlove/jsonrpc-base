@@ -26,6 +26,10 @@ Install the Python tox package and run ``tox``, it'll test this package with var
 
 Changelog
 ---------
+2.1.0 (2021-05-03)
+~~~~~~~~~~~~~~~~~~
+- Use uuid4 for request IDs
+
 2.0.0 (2021-03-16)
 ~~~~~~~~~~~~~~~~~~
 - BREAKING CHANGE: `Allow single mapping as a positional parameter. <https://github.com/emlove/jsonrpc-base/pull/6>`_
