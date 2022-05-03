@@ -26,6 +26,10 @@ Install the Python tox package and run ``tox``, it'll test this package with var
 
 Changelog
 ---------
+2.1.1 (2022-05-03)
+~~~~~~~~~~~~~~~~~~
+- Unpin test dependencies
+
 2.1.0 (2021-05-03)
 ~~~~~~~~~~~~~~~~~~
 - Use uuid4 for request IDs
