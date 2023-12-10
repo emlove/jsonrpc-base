@@ -62,10 +62,15 @@ def test_dumps(server):
     )
     # test empty args dict
     assertSameJSON(
-        '''{"params": {}, "jsonrpc": "2.0", "method": "my_method_name", "id":
-        1}''',
+        '''{"jsonrpc": "2.0", "method": "my_method_name", "id": 1}''',
         jsonrpc_base.Request(
             'my_method_name', params={}, msg_id=1).serialize()
+    )
+    # test empty args array
+    assertSameJSON(
+        '''{"jsonrpc": "2.0", "method": "my_method_name", "id": 1}''',
+        jsonrpc_base.Request(
+            'my_method_name', params=[], msg_id=1).serialize()
     )
     # test keyword args
     assertSameJSON(
