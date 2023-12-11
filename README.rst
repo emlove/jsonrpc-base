@@ -1,8 +1,8 @@
 jsonrpc-base: a compact JSON-RPC client library interface supporting multiple backends
 =======================================================================================================
 
-.. image:: https://travis-ci.org/emlove/jsonrpc-base.svg
-    :target: https://travis-ci.org/emlove/jsonrpc-base
+.. image:: https://github.com/emlove/jsonrpc-base/actions/workflows/main.yml/badge.svg
+    :target: https://github.com/emlove/jsonrpc-base/actions/workflows/main.yml
 .. image:: https://coveralls.io/repos/emlove/jsonrpc-base/badge.svg
     :target: https://coveralls.io/r/emlove/jsonrpc-base
 
@@ -26,6 +26,10 @@ Install the Python tox package and run ``tox``, it'll test this package with var
 
 Changelog
 ---------
+2.2.0 (2023-12-11)
+~~~~~~~~~~~~~~~~~~
+- Omit params attribute when empty `(#9) <https://github.com/emlove/jsonrpc-base/pull/9>`_ `@Makman2 <https://github.com/Makman2>`_
+
 2.1.1 (2022-05-03)
 ~~~~~~~~~~~~~~~~~~
 - Unpin test dependencies
@@ -45,7 +49,7 @@ Changelog
 
 1.0.3 (2019-11-12)
 ~~~~~~~~~~~~~~~~~~
-- Forwards compatibility for Python 3.9. `(#4) <https://github.com/emlove/jsonrpc-base/pull/4>`_ `@ a1fred <https://github.com/a1fred>`_
+- Forwards compatibility for Python 3.9. `(#4) <https://github.com/emlove/jsonrpc-base/pull/4>`_ `@a1fred <https://github.com/a1fred>`_
 
 1.0.2 (2018-08-23)
 ~~~~~~~~~~~~~~~~~~

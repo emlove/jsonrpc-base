@@ -9,7 +9,7 @@ except ImportError:
 
 setup(
     name='jsonrpc-base',
-    version='2.1.1',
+    version='2.2.0',
     author='Emily Love Mills',
     author_email='emily@emlove.me',
     packages=('jsonrpc_base',),
