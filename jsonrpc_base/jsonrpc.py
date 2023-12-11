@@ -193,7 +193,7 @@ class Request(Message):
     def serialize(self):
         """Generate the raw JSON message to be sent to the server"""
         data = {'jsonrpc': '2.0', 'method': self.method}
-        if self.params is not None:
+        if self.params:
             data['params'] = self.params
         if self.msg_id is not None:
             data['id'] = self.msg_id
