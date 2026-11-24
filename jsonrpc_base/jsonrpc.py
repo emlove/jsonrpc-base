@@ -208,9 +208,11 @@ class Request(Message):
         if not isinstance(data, dict):
             raise ProtocolError('Response is not a dictionary')
         if data.get('error') is not None:
-            code = data['error'].get('code', '')
-            message = data['error'].get('message', '')
-            raise ProtocolError(code, message, data)
+            get = getattr(data['error'], 'get', None)
+            if not callable(get):
+                raise ProtocolError(
+                    '', 'Response error is not an object', data)
+            raise ProtocolError(get('code', ''), get('message', ''), data)
         elif 'result' not in data:
             raise ProtocolError('Response without a result field')
         else:
