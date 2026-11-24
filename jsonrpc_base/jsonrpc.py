@@ -10,6 +10,15 @@ class JSONRPCError(Exception):
     """Root exception for all errors related to this library"""
 
 
+def _argument_text(argument):
+    """Return the str() of an argument, or its type if empty or failing."""
+    try:
+        text = str(argument)
+    except Exception:
+        text = ''
+    return text or type(argument).__name__
+
+
 class TransportError(JSONRPCError):
     """An error occurred while performing a connection to the server"""
 
@@ -21,6 +30,12 @@ class TransportError(JSONRPCError):
                 *args)
         else:
             super(TransportError, self).__init__(exception_text, *args)
+
+    def __str__(self):
+        """Join the str() of each argument when there is more than one."""
+        if len(self.args) < 2:
+            return super(TransportError, self).__str__()
+        return ': '.join(_argument_text(arg) for arg in self.args)
 
 
 class ProtocolError(JSONRPCError):
