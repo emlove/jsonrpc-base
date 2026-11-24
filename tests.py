@@ -1,3 +1,4 @@
+import collections
 import json
 
 import pytest
@@ -108,8 +109,88 @@ def test_parse_result(server):
             }, "id": "1"
         }
         request.parse_response(body)
-    assert protoerror.value.args[0] == -32601
-    assert protoerror.value.args[1] == 'Method not found'
+    assert protoerror.value.args == (-32601, 'Method not found', body)
+
+
+class MockGetOnly(object):
+    """Test error object with only a get() method, like from a custom loads."""
+
+    def get(self, key, default=None):
+        return {"code": -32601, "message": "Method not found"}.get(
+            key, default)
+
+
+class MockGetOnce(object):
+    """Test error object whose get attribute can be read only once."""
+
+    def __init__(self):
+        self.reads = 0
+
+    @property
+    def get(self):
+        self.reads += 1
+        if self.reads > 1:
+            raise AttributeError('read twice')
+        return {"code": -32601, "message": "Method not found"}.get
+
+
+class MockGetValue(object):
+    """Test error object whose get attribute cannot be called."""
+
+    get = 'boom'
+
+
+@pytest.mark.parametrize('make_error', [
+    lambda: {"code": -32601, "message": "Method not found"},
+    lambda: collections.UserDict(
+        {"code": -32601, "message": "Method not found"}),
+    MockGetOnly,
+    MockGetOnce,
+])
+def test_parse_error_from_an_object_with_get(make_error):
+    request = jsonrpc_base.Request('my_message', msg_id=1)
+    error = make_error()
+    body = {"jsonrpc": "2.0", "id": 1, "error": error}
+    with pytest.raises(ProtocolError) as protoerror:
+        request.parse_response(body)
+    assert protoerror.value.args == (-32601, 'Method not found', body)
+    assert protoerror.value.args[2] is body
+    assert protoerror.value.args[2]['error'] is error
+
+
+@pytest.mark.parametrize(('error', 'code', 'message'), [
+    ({}, '', ''),
+    ({"code": 0, "message": None}, 0, None),
+    ({"message": "oops"}, '', 'oops'),
+])
+def test_parse_error_fields(error, code, message):
+    request = jsonrpc_base.Request('my_message', msg_id=1)
+    body = {"jsonrpc": "2.0", "id": 1, "error": error}
+    with pytest.raises(ProtocolError) as protoerror:
+        request.parse_response(body)
+    assert protoerror.value.args == (code, message, body)
+
+
+@pytest.mark.parametrize('error', [
+    'boom', '', 42, 0, 1.5, ['boom'], [], True, False, MockGetValue()])
+def test_parse_error_that_is_not_an_object(error):
+    request = jsonrpc_base.Request('my_message', msg_id=1)
+    body = {"jsonrpc": "2.0", "id": 1, "error": error}
+    with pytest.raises(ProtocolError) as protoerror:
+        request.parse_response(body)
+    assert protoerror.value.args == (
+        '', 'Response error is not an object', body)
+    assert protoerror.value.args[2] is body
+    assert protoerror.value.args[2]['error'] is error
+
+
+def test_parse_error_before_result():
+    request = jsonrpc_base.Request('my_message', msg_id=1)
+    body = {"jsonrpc": "2.0", "id": 1, "result": 19, "error": False}
+    with pytest.raises(ProtocolError) as protoerror:
+        request.parse_response(body)
+    assert protoerror.value.args == (
+        '', 'Response error is not an object', body)
 
 
 def test_send_message(server):
