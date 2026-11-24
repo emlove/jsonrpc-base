@@ -1,4 +1,5 @@
 import json
+import traceback
 
 import pytest
 from unittest import mock
@@ -150,6 +151,87 @@ def test_exception_passthrough(server):
 def test_transport_error_constructor(server):
     with pytest.raises(TransportError, match='Test Message'):
         raise TransportError('Test Message')
+    assert str(TransportError('Test Message')) == 'Test Message'
+    assert str(TransportError('')) == ''
+    assert str(TransportError(TimeoutError())) == ''
+
+
+class MockResponseError(ValueError):
+    """Test exception with request headers in its repr, like aiohttp."""
+
+    def __str__(self):
+        return '200, message=Unexpected mimetype'
+
+    def __repr__(self):
+        return "MockResponseError(headers={'Authorization': 'Basic c2VjcmV0'})"
+
+
+def test_transport_error_text(server):
+    """Test a transport error shows the text of its reason, not the repr."""
+    def handler(message):
+        raise MockResponseError()
+    server._handler = handler
+    with pytest.raises(TransportError) as transport_error:
+        server.foo()
+
+    assert str(transport_error.value) == (
+        "Error calling method 'foo': Transport Error: "
+        "200, message=Unexpected mimetype")
+    assert 'c2VjcmV0' not in ''.join(traceback.format_exception(
+        TransportError, transport_error.value, transport_error.tb))
+
+
+def test_transport_error_text_without_reason_text(server):
+    """Test a reason without text shows its type, like a timeout."""
+    def handler(message):
+        raise TimeoutError()
+    server._handler = handler
+    with pytest.raises(TransportError) as transport_error:
+        server.foo()
+
+    assert str(transport_error.value) == (
+        "Error calling method 'foo': Transport Error: TimeoutError")
+
+
+class MockEmptyError(ValueError):
+    """Test exception without text."""
+
+
+class MockBrokenError(ValueError):
+    """Test exception whose text cannot be made."""
+
+    def __str__(self):
+        raise RuntimeError('no text')
+
+
+class MockStop(BaseException):
+    """Test exception that is not an Exception, like a cancellation."""
+
+
+class MockStoppingError(ValueError):
+    """Test exception whose text raises what is not an Exception."""
+
+    def __str__(self):
+        raise MockStop()
+
+
+def test_transport_error_text_of_each_argument():
+    """Test every argument shows, a reason without text as its type."""
+    assert str(TransportError(
+        'Transport Error', None, MockEmptyError(), 'retry')) == (
+        'Transport Error: MockEmptyError: retry')
+    assert str(TransportError('', None, MockEmptyError())) == (
+        'str: MockEmptyError')
+    assert str(TransportError('Transport Error', None, MockBrokenError())) == (
+        'Transport Error: MockBrokenError')
+    assert repr(TransportError('Transport Error', None, MockEmptyError())) == (
+        "TransportError('Transport Error', MockEmptyError())")
+
+
+def test_transport_error_text_lets_base_exceptions_through():
+    """Test the text does not swallow what is not an Exception."""
+    with pytest.raises(MockStop):
+        str(TransportError('Transport Error', None, MockStoppingError()))
 
 
 def test_forbid_private_methods(server):
